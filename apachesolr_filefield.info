@@ -1,0 +1,7 @@
+name = Apache Solr Filefield
+description = Expose the contents of files in file fields to the Apachesolr search index
+package = Search Toolkit
+dependencies[] = apachesolr
+dependencies[] = apachesolr_attachments
+dependencies[] = file
+core = 7.x
