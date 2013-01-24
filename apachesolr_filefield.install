@@ -8,5 +8,3 @@ function apachesolr_filefield_uninstall() {
   variable_del('apachesolr_filefield_plain_types');
   variable_del('apachesolr_filefield_attachment_types');
 }
-
-asdf;df;df();

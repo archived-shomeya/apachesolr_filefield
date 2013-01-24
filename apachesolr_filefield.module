@@ -104,23 +104,17 @@ function apachesolr_filefield_fields_default_file_callback($entity, $field_name,
  * Return the cleaned version of the content of a URL.
  */
 function apachesolr_filefield_fetch_file_contents($file) {
-  $abs_url = url($url, array('absolute' => TRUE));
-  $response = drupal_http_request($abs_url);
-  if (empty($response->error)) {
-    if (apachesolr_filefield_match_mime($response->headers['content-type'], variable_get('apachesolr_filefield_plain_types', "text/plain\r\ntext/*html\r\ntext/xml\r\n"))) {
-      $text = apachesolr_clean_text($response->data);
+  if (file_exists($file['uri'])) {
+    $filepath = drupal_realpath($file['uri']);
+    if (apachesolr_filefield_match_mime($file['filemime'], variable_get('apachesolr_filefield_plain_types', "text/plain\r\ntext/*html\r\ntext/xml\r\n"))) {
+      // These files don't need to be parsed with tika, just get their content directly.
+      $text = file_get_contents($filepath);
+      // Strip bad control characters.
+      $text = iconv("UTF-8", "UTF-8//IGNORE", $text);
+      $text = trim(apachesolr_clean_text($text));
     }
-    elseif (apachesolr_filefield_match_mime($response->headers['content-type'], variable_get('apachesolr_filefield_attachment_types', "application/*\r\n"))) {
+    elseif (apachesolr_filefield_match_mime($file['filemime'], variable_get('apachesolr_filefield_attachment_types', "application/*\r\n"))) {
       module_load_include('inc', 'apachesolr_attachments', 'apachesolr_attachments.index');
-
-      // Save the data to a file so that tika can read it.
-      $file = file_save_data($response->data, 'temporary://' . drupal_basename($abs_url), FILE_EXISTS_RENAME);
-
-      // We have to set the status and save again since we can't specifyu with file_save_data().
-      // This ensures that the files will be deleted upon running cron.
-      $file->status = 0;
-      $file = file_save($file);
-      $filepath = drupal_realpath($file->uri);
 
       // The next few lines are copied from the apachsolr_attachments.index.inc
       if (variable_get('apachesolr_attachments_extract_using', 'tika') == 'tika') {
